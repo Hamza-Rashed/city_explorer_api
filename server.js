@@ -8,7 +8,7 @@ const
     weatherData = require('./data/weather.json'),
     cors = require('cors');
     app.use(cors());
-    
+
 app.get('/', (req, res) => {
   res.status(200).send('Hello');
 });
@@ -51,9 +51,10 @@ function Weather(description,datetime) {
     if(res.status == 200) {
       res.status(200).send(data)
     }else{
-      app.use('*', (req, res) => res.send('Sorry, that route does not exist.'));
+      res.status(500).send('there is some error')
     }
   }
 
+  app.use('*', (req, res) => res.send('Sorry, that route does not exist.'));
 
 app.listen(port,() => console.log('server is running'));
