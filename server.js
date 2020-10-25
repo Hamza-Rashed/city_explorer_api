@@ -8,36 +8,52 @@ const
     weatherData = require('./data/weather.json'),
     cors = require('cors');
     app.use(cors());
+    
 app.get('/', (req, res) => {
   res.status(200).send('Hello');
 });
 
 app.get('/location',(req,res)=>{
   let city = req.query.city
-  let location = new Location(city,locationData)
-  res.json(location)
+  let locationObj;
+  locationData.forEach(locationData=>{
+    locationObj = new Location(city, locationData);
+});
+  res.json(locationObj)
+  hundelError(res,locationObj)
 })
 
-// app.get('/weather',(req,res)=>{
-//   let weather = new Weather(weatherData)
-//   res.json(weather)
-// })
+app.get('/weather',(req,res)=>{
+  let weatherObj = [];
+  weatherData.data.forEach(element=>{
+    let des = element.weather.description
+    let dataTime = element.datetime
+    weatherObj.push(new Weather(des , dataTime))
+  })
+  res.json(weatherObj)
+  console.log(weatherObj)
+  hundelError(res,weatherObj)
+})
 
 function Location(city, locationData){
   this.search_query=city;
-  this.formated_query=locationData.display_name;
+  this.formatted_query=locationData.display_name;
   this.latitude = locationData.lat;
   this.longitude = locationData.lon;
 }
 
+function Weather(description,datetime) {
+  this.forecast = description
+  this.time = datetime
+  }
 
-// function Weather(information) {
-//   this.search_query = information[0].display_name
-//   this.icon = information[0].icon
-//   this.lat = information[0].lat
-//   this.lon = information[0].lon 
-//   }
+  function hundelError(res,data) {
+    if(res.status == 200) {
+      res.status(200).send(data)
+    }else{
+      app.use('*', (req, res) => res.send('Sorry, that route does not exist.'));
+    }
+  }
 
-app.use('*', (req, res) => res.send('Sorry, that route does not exist.'));
 
 app.listen(port,() => console.log('server is running'));
