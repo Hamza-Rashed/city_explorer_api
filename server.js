@@ -1,14 +1,17 @@
-const
-    express = require('express'),
-    port = process.env.PORT || 3000,
-    app = express();
+'use strict';
 
-app.use(express.static('public'));
+require('dotenv').config();
+const express = require('express');
+const app = express();
 
-app.get('/',(req , res)=>{
-    res.status(200).sendFile('index.html')
-})
+const port = process.env.PORT || 3000;
 
-app.listen(port , ()=>{
-    console.log('server is running')
-})
+
+app.get('/', (req, res) => {
+  res.status(200).send('Hello');
+});
+
+
+app.use('*', (req, res) => response.send('Sorry, that route does not exist.'));
+
+app.listen(port,() => console.log('server is running'));
