@@ -5,8 +5,9 @@ const
     app = express(),
     port = process.env.PORT || 3000,
     locationData = require('./data/location.json'),
-    weatherData = require('./data/weather.json');
-
+    weatherData = require('./data/weather.json'),
+    cors = require('cors');
+    app.use(cors());
 app.get('/', (req, res) => {
   res.status(200).send('Hello');
 });
