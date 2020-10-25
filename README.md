@@ -1,4 +1,4 @@
-# My-Portfolio
+# lab 06
 
 Number and name of feature: ________________________________
 
