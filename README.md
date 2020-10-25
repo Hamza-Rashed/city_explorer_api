@@ -1,4 +1,4 @@
-# lab 06
+# city_explorer_api
 
 # Project Name
 
