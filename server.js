@@ -60,8 +60,8 @@ function getTrails(req, res) {
     })
 }
 
-function welcome(res) {
-    res.status(200).send('Hello');
+function welcome(req,res) {
+    res.status(200).send('Hello all');
 }
 
 // constructor functions
