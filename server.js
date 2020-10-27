@@ -14,7 +14,9 @@ const
     API_KEY_trails = process.env.API_KEY_trails;
 
 app.use(cors());
-app.get('/', welcome)
+app.get('/', (req,res)=>{
+    res.send('hello')
+})
 
 app.get('/location', getLocation)
 
@@ -54,14 +56,10 @@ function getTrails(req, res) {
     let trailsArr = [];
     superagent.get(trailsURL).then(trailsData => {
         trailsData.body.trails.map((data) => {
-            push(new Trail(data));
+            trailsArr.push(new Trail(data));
         });
         res.json(trailsArr);
     })
-}
-
-function welcome(res) {
-    res.status(200).send('Hello');
 }
 
 // constructor functions
@@ -89,7 +87,6 @@ function Trail(data) {
     this.conditions = data.conditionStatus;
     this.condition_date = data.conditionDate.split(' ')[0]; //split date without time
     this.condition_time = data.conditionDate.split(' ')[1]; //split time without date
-
 }
 
 app.use('*', (req, res) => res.send('Sorry, that route does not exist.'));
