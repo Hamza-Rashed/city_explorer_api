@@ -99,6 +99,7 @@ function getWeather(req, res) {
   })
 }
 
+
 function getTrails(req, res) {
   const longitude = req.query.longitude;
   const latitude = req.query.latitude;
@@ -110,17 +111,7 @@ function getTrails(req, res) {
           trailsArr.push(new Trail(data));
       });
       res.json(trailsArr);
-  })
-}
-
-// function getTrails(req,res) {
-//   let city = req.query.city;
-//   let sqlGetTrails = `SELECT * FROM trails WHERE search_query = '${city}';`;
-//   client.query(sqlGetTrails).then(data => {
-//           const infoTrails = new Trail(data.rows);
-//           res.status(200).json(infoTrails);
-//   })
-// }
+  }
 
 function Location(city, locationData) {
     this.search_query = city;
@@ -153,6 +144,7 @@ function Trail(data) {
 
 app.use('*', (req, res) => res.send('Sorry, that route does not exist.'));
 
+
 client.connect().then(() => {
   app.listen(port, (err) => {
       if (err) {
@@ -161,3 +153,4 @@ client.connect().then(() => {
       console.log('server is runnuing');
   });
 });
+
