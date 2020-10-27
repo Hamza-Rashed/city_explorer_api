@@ -35,29 +35,6 @@ app.get('/trails', getTrails)
 // app.get('/add-trails',addTrails)
 
 
-// function getLocation(req, res) {
-//   let city = req.query.city;
-//   let sqlLocation = 'SELECT * FROM location WHERE search_query = $1;';
-//   let safeValues = [city];
-//   client.query(sqlLocation, safeValues).then(data => {
-//     if (data.rows.length > 0) {
-//       res.status(200).json(data.rows);
-//     }
-//     else {
-//       const locationURL = `https://eu1.locationiq.com/v1/search.php?key=${API_KEY_location}&q=${city}&format=json`;
-//       let location;
-//       superagent.get(locationURL).then(locationData => {
-//         location = new Location(city, locationData.body[0]);
-//         const newLocation = 'INSERT INTO location (search_query, formatted_query, latitude, longitude) VALUES ($1, $2, $3, $4);';
-//         const safeValuesInsert = [city, location.formatted_query, location.latitude, location.longitude];
-//         client.query(newLocation, safeValuesInsert).then(result => {
-//           response.status(200).json(location);
-//         })
-//       })
-//     }
-//   })
-// }
-
 function getLocation(req, res) {
   let city = req.query.city;
   let aqlLocation = `select * from location where search_query = '${city}';`;
