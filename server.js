@@ -28,111 +28,90 @@ app.get('/weather', getWeather)
 
 app.get('/trails', getTrails)
 
-app.get('/add-location', addLocation)
+// app.get('/add-location', addLocation)
 
-app.get('/add-weather',addWeather)
+// app.get('/add-weather',addWeather)
 
-app.get('/add-trails',addTrails)
+// app.get('/add-trails',addTrails)
 
 
-function addLocation(req, res) {
-  let city = req.query.city
-  const locationURL = `https://eu1.locationiq.com/v1/search.php?key=${API_KEY_location}&q=${city}&format=json`;
-  let all_location =[];
-  superagent.get(locationURL).then(data => {
-    all_location.push(new Location(city, data.body));
-    let sqlLocation = 'insert into location (search_query,display_name,lat,lon)values($1,$2,$3,$4);';
-    let safeValues = [all_location[0].search_query,
-    all_location[0].formatted_query,
-    all_location[0].latitude,
-    all_location[0].longitude]
-    client.query(sqlLocation,safeValues).then(data=>{
-      res.status(200).json(data)
-    })
-  })
-}
+// function getLocation(req, res) {
+//   let city = req.query.city;
+//   let sqlLocation = 'SELECT * FROM location WHERE search_query = $1;';
+//   let safeValues = [city];
+//   client.query(sqlLocation, safeValues).then(data => {
+//     if (data.rows.length > 0) {
+//       res.status(200).json(data.rows);
+//     }
+//     else {
+//       const locationURL = `https://eu1.locationiq.com/v1/search.php?key=${API_KEY_location}&q=${city}&format=json`;
+//       let location;
+//       superagent.get(locationURL).then(locationData => {
+//         location = new Location(city, locationData.body[0]);
+//         const newLocation = 'INSERT INTO location (search_query, formatted_query, latitude, longitude) VALUES ($1, $2, $3, $4);';
+//         const safeValuesInsert = [city, location.formatted_query, location.latitude, location.longitude];
+//         client.query(newLocation, safeValuesInsert).then(result => {
+//           response.status(200).json(location);
+//         })
+//       })
+//     }
+//   })
+// }
 
-function getLocation(req,res) {
+function getLocation(req, res) {
   let city = req.query.city;
-  let sqlGetLocation = `SELECT * FROM location WHERE search_query = '${city}';`;
-  client.query(sqlGetLocation).then(data => {
-    // console.log(all_location)
-          const infoLocation = new Location(city, data.rows);
-          res.status(200).json(infoLocation);
+  let aqlLocation = `select * from location where search_query = '${city}';`;
+  client.query(aqlLocation).then(result => {
+      if (result.rows.length > 0) {
+          const dbLocation = new Location(city, result.rows);
+          res.status(200).send(dbLocation);
+      } else {
+          let locationURL = `https://eu1.locationiq.com/v1/search.php?key=${API_KEY_location}&q=${city}&format=json`;
+          superagent.get(locationURL).then(data => {
+             let LocationArr = [];
+               LocationArr.push(new Location(city, data.body));
+              let sqlLocationPost = 'insert into location (search_query, formatted_query, latitude, longitude) values ($1, $2, $3, $4);'
+              let safeValues = [
+                LocationArr[0].search_query,
+                LocationArr[0].formatted_query,
+                LocationArr[0].latitude,
+                LocationArr[0].longitude
+              ]
+              client.query(sqlLocationPost, safeValues).then((data) => {
+                  res.status(200).json(data.rows);
+              });
+          });
+      }
+  });
+}
+
+function getWeather(req, res) {
+  let city = req.query.search_query;
+  const longitude = req.query.longitude;
+  const latitude = req.query.latitude;
+  const weatherURL = `https://api.weatherbit.io/v2.0/forecast/daily?city=${city}&lat=${latitude}&lon=${longitude}&key=${API_KEY_weather}`;
+  let weatherArr = [];
+  superagent.get(weatherURL).then(weatherData => {
+      weatherData.body.data.map((data) => {
+          weatherArr.push(new Weather(data))
+      });
+      res.json(weatherArr);
   })
 }
 
-function addWeather(req, res) {
-    let city = req.query.search_query;
-    const longitude = req.query.longitude;
-    const latitude = req.query.latitude;
-    const weatherURL = `https://api.weatherbit.io/v2.0/forecast/daily?city=${city}&lat=${latitude}&lon=${longitude}&key=${API_KEY_weather}`;
-    let all_weather = [];
-    superagent.get(weatherURL).then(weatherData => {
-        weatherData.body.data.map((data) => {
-          all_weather.push(new Weather(data));
-          let sqlWeather = 'insert into weather (search_query,forecast,time)values($1,$2,$3);';
-          let safeValues = [all_weather[0].search_query,
-          all_weather[0].forecast,
-          all_weather[0].time
-                       ]
-          client.query(sqlWeather,safeValues).then(data=>{
-            res.status(200).json(data)
-          })
-          
-        });
-    })
-}
 
-function getWeather(req,res) {
-  let city = req.query.city;
-  let sqlGetWeather = `SELECT * FROM weather WHERE search_query = '${city}';`;
-  client.query(sqlGetWeather).then(data => {
-          const infoWeather = new Weather(data.rows);
-          res.status(200).json(infoWeather);
-  })
-}
-
-function addTrails(req, res) {
-    const longitude = req.query.longitude;
-    const latitude = req.query.latitude;
-    console.log(longitude, latitude)
-    const trailsURL = `https://www.hikingproject.com/data/get-trails?lat=${latitude}&lon=${longitude}&key=${API_KEY_trails}`;
-    let all_trails = [];
-    superagent.get(trailsURL).then(trailsData => {
-        trailsData.body.trails.map((data) => {
-          all_trails.push(new Trail(data))
-
-            let sqlTrails = 'insert into trails (search_query,name,location,length,stars,star_votes,summary,trail_url,conditions,condition_date,condition_time)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11);';
-            let safeValues = [
-            all_trails[0].search_query,
-            all_trails[0].name,
-            all_trails[0].location,
-            all_trails[0].length,
-            all_trails[0].stars,
-            all_trails[0].star_votes,
-            all_trails[0].summary,
-            all_trails[0].trail_url,
-            all_trails[0].conditions,
-            all_trails[0].condition_date,
-            all_trails[0].condition_time
-                         ]
-            client.query(sqlTrails,safeValues).then(data=>{
-              res.status(200).json(data)
-            })
-        });
-    })
-}
-
-
-function getTrails(req,res) {
-  let city = req.query.city;
-  let sqlGetTrails = `SELECT * FROM trails WHERE search_query = '${city}';`;
-  client.query(sqlGetTrails).then(data => {
-          const infoTrails = new Trail(data.rows);
-          res.status(200).json(infoTrails);
-  })
-
+function getTrails(req, res) {
+  const longitude = req.query.longitude;
+  const latitude = req.query.latitude;
+  console.log(longitude, latitude)
+  const trailsURL = `https://www.hikingproject.com/data/get-trails?lat=${latitude}&lon=${longitude}&key=${API_KEY_trails}`;
+  let trailsArr = [];
+  superagent.get(trailsURL).then(trailsData => {
+      trailsData.body.trails.map((data) => {
+          trailsArr.push(new Trail(data));
+      });
+      res.json(trailsArr);
+  }
 
 function Location(city, locationData) {
     this.search_query = city;
@@ -142,9 +121,10 @@ function Location(city, locationData) {
     // all_location.push(this)
 }
 
-function Weather(data) {
-    this.forecast = data.weather.description
-    this.time = data.datetime
+function Weather(city,data) {
+  this.search_query = city;
+  this.forecast = data.weather.description
+  this.time = data.datetime
     // all_weather.push(this)
 }
 
