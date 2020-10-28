@@ -28,6 +28,7 @@ app.get('/weather', getWeather)
 
 app.get('/trails', getTrails)
 
+
 function getLocation(req, res) {
   let city = req.query.city;
   let LocationArr;
@@ -74,6 +75,7 @@ function getWeather(req, res) {
   })
 }
 
+
 function getTrails(req, res) {
   const longitude = req.query.longitude;
   const latitude = req.query.latitude;
@@ -85,12 +87,12 @@ function getTrails(req, res) {
           trailsArr.push(new Trail(data));
       });
       res.json(trailsArr);
+
   })
   .catch(()=>{
     res.status(500).send('there are some error')
   })
 }
-
 
 function Location(city, locationData) {
     this.search_query = city;
@@ -122,6 +124,7 @@ function Trail(data) {
 
 app.use('*', (req, res) => res.send('Sorry, that route does not exist.'));
 
+
 client.connect().then(() => {
   app.listen(port, (err) => {
       if (err) {
@@ -129,4 +132,6 @@ client.connect().then(() => {
       }
       console.log('server is runnuing');
   });
+
 }).catch(()=> console.log('there is no connection with database'))
+
