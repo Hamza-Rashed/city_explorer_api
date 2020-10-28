@@ -99,13 +99,13 @@ function Location(city, locationData) {
     this.formated_query = locationData.display_name;
     this.latitude = locationData.lat;
     this.longitude = locationData.lon;
-    // all_location.push(this)
+    
 }
 
 function Weather(data) {
   this.forecast = data.weather.description
   this.time = data.datetime
-    // all_weather.push(this)
+    
 }
 
 function Trail(data) {
