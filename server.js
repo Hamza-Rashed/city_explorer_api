@@ -28,59 +28,31 @@ app.get('/weather', getWeather)
 
 app.get('/trails', getTrails)
 
-// app.get('/add-location', addLocation)
-
-// app.get('/add-weather',addWeather)
-
-// app.get('/add-trails',addTrails)
-
-
-// function getLocation(req, res) {
-//   let city = req.query.city;
-//   let sqlLocation = 'SELECT * FROM location WHERE search_query = $1;';
-//   let safeValues = [city];
-//   client.query(sqlLocation, safeValues).then(data => {
-//     if (data.rows.length > 0) {
-//       res.status(200).json(data.rows);
-//     }
-//     else {
-//       const locationURL = `https://eu1.locationiq.com/v1/search.php?key=${API_KEY_location}&q=${city}&format=json`;
-//       let location;
-//       superagent.get(locationURL).then(locationData => {
-//         location = new Location(city, locationData.body[0]);
-//         const newLocation = 'INSERT INTO location (search_query, formatted_query, latitude, longitude) VALUES ($1, $2, $3, $4);';
-//         const safeValuesInsert = [city, location.formatted_query, location.latitude, location.longitude];
-//         client.query(newLocation, safeValuesInsert).then(result => {
-//           response.status(200).json(location);
-//         })
-//       })
-//     }
-//   })
-// }
-
 function getLocation(req, res) {
   let city = req.query.city;
+  let LocationArr;
   let aqlLocation = `select * from location where search_query = '${city}';`;
-  client.query(aqlLocation).then(result => {
-      if (result.rows.length > 0) {
-          const dbLocation = new Location(city, result.rows);
-          res.status(200).send(dbLocation);
+  client.query(aqlLocation).then(data => {
+      if (data.rows.length > 0) {
+          LocationArr = new Location(city, data.rows[0]);
+          res.status(200).send(LocationArr);
       } else {
           let locationURL = `https://eu1.locationiq.com/v1/search.php?key=${API_KEY_location}&q=${city}&format=json`;
           superagent.get(locationURL).then(data => {
-             let LocationArr = [];
-               LocationArr.push(new Location(city, data.body));
-              let sqlLocationPost = 'insert into location (search_query, formatted_query, latitude, longitude) values ($1, $2, $3, $4);'
+               LocationArr = new Location(city, data.body[0]);
+              let sqlLocationPost = 'insert into location (search_query, display_name, lat, lon) values ($1, $2, $3, $4);'
               let safeValues = [
-                LocationArr[0].search_query,
-                LocationArr[0].formatted_query,
-                LocationArr[0].latitude,
-                LocationArr[0].longitude
+                LocationArr.search_query,
+                LocationArr.formatted_query,
+                LocationArr.latitude,
+                LocationArr.longitude
               ]
-              client.query(sqlLocationPost, safeValues).then((data) => {
-                  res.status(200).json(data.rows);
-              });
-          });
+              client.query(sqlLocationPost, safeValues)
+                  res.json(LocationArr);
+          })
+          .catch(()=>{
+            res.status(500).send('there are some error')
+          })
       }
   });
 }
@@ -97,6 +69,9 @@ function getWeather(req, res) {
       });
       res.json(weatherArr);
   })
+  .catch(()=>{
+    res.status(500).send('there are some error')
+  })
 }
 
 function getTrails(req, res) {
@@ -111,27 +86,21 @@ function getTrails(req, res) {
       });
       res.json(trailsArr);
   })
+  .catch(()=>{
+    res.status(500).send('there are some error')
+  })
 }
 
-// function getTrails(req,res) {
-//   let city = req.query.city;
-//   let sqlGetTrails = `SELECT * FROM trails WHERE search_query = '${city}';`;
-//   client.query(sqlGetTrails).then(data => {
-//           const infoTrails = new Trail(data.rows);
-//           res.status(200).json(infoTrails);
-//   })
-// }
 
 function Location(city, locationData) {
     this.search_query = city;
-    this.formated_query = locationData[0].display_name;
-    this.latitude = locationData[0].lat;
-    this.longitude = locationData[0].lon;
+    this.formated_query = locationData.display_name;
+    this.latitude = locationData.lat;
+    this.longitude = locationData.lon;
     // all_location.push(this)
 }
 
-function Weather(city,data) {
-  this.search_query = city;
+function Weather(data) {
   this.forecast = data.weather.description
   this.time = data.datetime
     // all_weather.push(this)
@@ -160,4 +129,4 @@ client.connect().then(() => {
       }
       console.log('server is runnuing');
   });
-});
+}).catch(()=> console.log('there is no connection with database'))
