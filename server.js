@@ -14,9 +14,9 @@ const
     API_KEY_location = process.env.API_KEY_location,
     API_KEY_weather = process.env.API_KEY_weather,
     API_KEY_trails = process.env.API_KEY_trails,
-    DATABASE = process.env.DATABASE;
+    DATABASE_URL = process.env.DATABASE_URL;
 
-let client =new pg.Client(DATABASE);
+let client =new pg.Client(DATABASE_URL);
 app.use(cors());
 app.get('/', (req,res)=>{
   res.send('hello')
