@@ -14,7 +14,10 @@ const
     API_KEY_location = process.env.API_KEY_location,
     API_KEY_weather = process.env.API_KEY_weather,
     API_KEY_trails = process.env.API_KEY_trails,
-    DATABASE_URL = process.env.DATABASE_URL;
+    DATABASE_URL = process.env.DATABASE_URL,
+    API_KEY_movie = process.env.API_KEY_movie,
+    API_KEY_yelp = process.env.API_KEY_yelp,
+    headers = {"Authorization": `Bearer ${API_KEY_yelp}`};
 
 let client =new pg.Client(DATABASE_URL);
 app.use(cors());
@@ -23,10 +26,10 @@ app.get('/', (req,res)=>{
 })
 
 app.get('/location', getLocation)
-
 app.get('/weather', getWeather)
-
 app.get('/trails', getTrails)
+app.get('/yelp',getYelp)
+app.get('/movies',getMovie)
 
 function getLocation(req, res) {
   let city = req.query.city;
@@ -37,8 +40,13 @@ function getLocation(req, res) {
           LocationArr = new Location(city, data.rows[0]);
           res.status(200).send(LocationArr);
       } else {
-          let locationURL = `https://eu1.locationiq.com/v1/search.php?key=${API_KEY_location}&q=${city}&format=json`;
-          superagent.get(locationURL).then(data => {
+          let locationURL = `https://eu1.locationiq.com/v1/search.php`;
+          let queryParamsLocation = {
+            key: API_KEY_location,
+            q: city,
+            format:'json'
+           };
+          superagent.get(locationURL).query(queryParamsLocation).then(data => {
                LocationArr = new Location(city, data.body[0]);
               let sqlLocationPost = 'insert into location (search_query, display_name, lat, lon) values ($1, $2, $3, $4);'
               let safeValues = [
@@ -61,9 +69,15 @@ function getWeather(req, res) {
   let city = req.query.search_query;
   const longitude = req.query.longitude;
   const latitude = req.query.latitude;
-  const weatherURL = `https://api.weatherbit.io/v2.0/forecast/daily?city=${city}&lat=${latitude}&lon=${longitude}&key=${API_KEY_weather}`;
+  const weatherURL = `https://api.weatherbit.io/v2.0/forecast/daily`;
+  let queryParamsWeather = {
+    city: city,
+    lat: latitude,
+    lon: longitude,
+    key: API_KEY_weather 
+   };
   let weatherArr = [];
-  superagent.get(weatherURL).then(weatherData => {
+  superagent.get(weatherURL).query(queryParamsWeather).then(weatherData => {
       weatherData.body.data.map((data) => {
           weatherArr.push(new Weather(data))
       });
@@ -78,15 +92,66 @@ function getTrails(req, res) {
   const longitude = req.query.longitude;
   const latitude = req.query.latitude;
   console.log(longitude, latitude)
-  const trailsURL = `https://www.hikingproject.com/data/get-trails?lat=${latitude}&lon=${longitude}&key=${API_KEY_trails}`;
+  const trailsURL = `https://www.hikingproject.com/data/get-trails`;
+  let queryParamsTrails = {
+    lat: latitude,
+    lon: longitude,
+    key: API_KEY_trails 
+   };
   let trailsArr = [];
-  superagent.get(trailsURL).then(trailsData => {
+  superagent.get(trailsURL).query(queryParamsTrails).then(trailsData => {
       trailsData.body.trails.map((data) => {
           trailsArr.push(new Trail(data));
       });
       res.json(trailsArr);
   })
   .catch(()=>{
+    res.status(500).send('there are some error')
+  })
+}
+
+function getYelp(req,res){
+  let latitude = req.query.latitude;
+  let longitude = req.query.longitude;
+  let page = req.query.page;
+  const limitSize = 5;
+  let began = (page - 1) * limitSize;
+  
+  const yelpURL = `https://api.yelp.com/v3/businesses/search`
+  let queryParams = {
+    latitude: latitude,
+    longitude: longitude,
+    offset: began,
+    limit: limitSize 
+   };
+  let arrYalp = [];
+   superagent.get(yelpURL).set(headers).query(queryParams).then(data => {
+     let AllData = data.body.businesses;
+     AllData.forEach(element=>{
+         arrYalp.push(new Yelp(element))
+     })
+     res.send(arrYalp);
+          }).catch(()=>{
+            res.status(500).send('there are some error')
+          })
+    }
+
+function getMovie(req,res){
+  let city = req.query.search_query;
+  let movieURL = `https://api.themoviedb.org/3/search/movie`
+  let queryParams = {
+    query: city,
+    api_key: API_KEY_movie
+   };
+  let moviesArr = [];
+  superagent.get(movieURL).query(queryParams)
+  .then(data =>{
+    let AllData = data.body.results
+      for(let i=0 ; i<AllData.length ; i++) {
+        moviesArr.push(new Movie(AllData[i]))
+      }
+      res.status(200).json(moviesArr)
+  }).catch(()=>{
     res.status(500).send('there are some error')
   })
 }
@@ -119,6 +184,26 @@ function Trail(data) {
     this.condition_time = data.conditionDate.split(' ')[1]; //split time without date
     // all_trails.push(this)
 }
+
+function Movie(data) {
+  this.title = data.title;
+  this.overview = data.overview;
+  this.average_votes = data.vote_average;
+  this.total_votes = data.vote_count;
+  this.image_url =`https://image.tmdb.org/t/p/w500${data.poster_path}`; 
+  this.popularity = data.popularity;
+  this.released_on = data.release_date;
+
+}
+// Yelp.all = [];
+function Yelp(data) {
+  this.name = data.name;
+  this.image_url = data.image_url;
+  this.price = data.price;
+  this.rating = data.rating;
+  this.url = data.url;
+}
+
 
 app.use('*', (req, res) => res.send('Sorry, that route does not exist.'));
 
