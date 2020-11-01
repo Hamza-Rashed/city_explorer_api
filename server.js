@@ -163,7 +163,7 @@ function getMovie(req,res){
 
 function Location(city, locationData) {
     this.search_query = city;
-    this.formated_query = locationData.display_name;
+    this.formatted_query = locationData.display_name;
     this.latitude = locationData.lat;
     this.longitude = locationData.lon;
     
